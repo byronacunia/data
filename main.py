@@ -1,21 +1,17 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from itertools import zip_longest
 import pandas as pd
 #Load the data into a Pandas DataFrame
 Year1_df = pd.read_excel('PV_firstRealease.xlsx', sheet_name='Year 1')
 
-#Group the Year1_df DataFrame by the 'Hour' column
-groups = Year1_df.groupby(['Hour', 'Starting minute (inclussive)'])
+n_rows = 11
+df_chunks = np.array_split(Year1_df, len(Year1_df) // n_rows + (len(Year1_df) % n_rows != 0))
 
-#Iterate through the groups and print the group name and the number of unique rows in each group.
-for name, group in groups:
-    print(name, group.shape[0])
-    #Calculate the Z-score of each data point
-
-
+# Iterate over the groups and print the group and its size
+for group in df_chunks:
     # Calculate the median of the 'Generated power' column
     median = group['Generated power'].median()
-
     # Compute the mean and standard deviation of the data
     mean = group['Generated power'].mean()
     std = group['Generated power'].std()
@@ -31,7 +27,6 @@ for name, group in groups:
     lower_bound = median - 3 * iqr
     print('upper_bound = ', upper_bound)
     print('lower_bound = ', lower_bound)
-
     # Replace the outliers with the upper and lower bounds
     group['Generated power'] = group['Generated power'].clip(lower=lower_bound, upper=upper_bound)
     # Replace the remaining outliers with the median value
@@ -40,16 +35,12 @@ for name, group in groups:
     # Plot the 'SolarRadiationWatts_m2' column
     x = np.linspace(0, group.shape[0], group.shape[0])
     plt.scatter(x, group['Generated power'].values)
-    #plt.hist(group['Generated power'].values)
+    # plt.hist(group['Generated power'].values)
     plt.xlabel('Sample')
     plt.ylabel('Generated power')
-    #group['Generated power'].plot(kind='line')
-    plt.title('Solar Generated power in Watts of Hour='+str(name))
+    # group['Generated power'].plot(kind='line')
+    plt.title('Solar Generated power in Watts of Hour=' + str(group['Hour'].values[0]))
     # Save the plot
-    plt.savefig(str(name)+'.png',dpi=300)
+    plt.savefig(str(group['Hour'].values[0]) + '.png', dpi=300)
     # Clear the current figure
     plt.clf()
-
-
-print(Year1_df.columns[0])
-print("Fin")
